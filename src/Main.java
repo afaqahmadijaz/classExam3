@@ -9,10 +9,10 @@ public class Main {
     public static void main(String[] args) {
         Library lib = new Library();
 
-        Book b1 = new Book("Atomic Habits", "James Clear");
-        Book b2 = new Book("The Hobbit", "J. R. R. Tolkien");
-        Movie m1 = new Movie("Inception", 148);
-        Movie m2 = new Movie("Interstellar", 169);
+        Book b1 = new Book("Meditations", "Marcus Aurelius");
+        Book b2 = new Book("The 7 Habits of Highly Effective People", "Stephen Covey");
+        Movie m1 = new Movie("Interstellar", 169);
+        Movie m2 = new Movie("The Pursuit of Happyness", 117);
 
         lib.addToCatalog(b1);
         lib.addToCatalog(m1);
@@ -71,6 +71,10 @@ class Book extends MediaItem {
     public void play() {
         System.out.println("Reading the book: " + getInfo() + " by " + author + ".");
     }
+
+    public String getAuthor() {
+        return author;
+    }
 }
 
 class Movie extends MediaItem {
@@ -84,6 +88,10 @@ class Movie extends MediaItem {
     @Override
     public void play() {
         System.out.println("Watching the movie: " + getInfo() + " (" + durationMinutes + " minutes).");
+    }
+
+    public int getDuration() {
+        return durationMinutes;
     }
 }
 
@@ -129,10 +137,12 @@ class Library {
             for (MediaItem item : catalog) {
                 if (item instanceof Book) {
                     Book b = (Book) item;
-                    out.println("BOOK|" + b.getInfo());
+                    // Save BOTH title and author
+                    out.println("BOOK|" + b.getInfo() + "|" + b.getAuthor());
                 } else if (item instanceof Movie) {
                     Movie m = (Movie) item;
-                    out.println("MOVIE|" + m.getInfo());
+                    // Save BOTH title and duration
+                    out.println("MOVIE|" + m.getInfo() + "|" + m.getDuration());
                 } else {
                     out.println("MEDIA|" + item.getInfo());
                 }
@@ -151,18 +161,21 @@ class Library {
             catalog.clear();
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split("\\|", 2);
+                String[] parts = line.split("\\|");
                 if (parts.length < 2) continue;
 
                 String type = parts[0];
-                String title = parts[1];
 
-                if (type.equals("BOOK")) {
-                    catalog.add(new Book(title, ""));
-                } else if (type.equals("MOVIE")) {
-                    catalog.add(new Movie(title, 0));
-                } else {
-                    catalog.add(new MediaItem(title));
+                if (type.equals("BOOK") && parts.length >= 3) {
+                    String title = parts[1];
+                    String author = parts[2];
+                    catalog.add(new Book(title, author));
+                } else if (type.equals("MOVIE") && parts.length >= 3) {
+                    String title = parts[1];
+                    int duration = Integer.parseInt(parts[2]);
+                    catalog.add(new Movie(title, duration));
+                } else if (parts.length >= 2) {
+                    catalog.add(new MediaItem(parts[1]));
                 }
             }
         } catch (Exception e) {
@@ -176,7 +189,7 @@ class Library {
 
     private boolean searchRecursive(String title, int index) {
         if (index >= catalog.size()) return false;
-        if (catalog.get(index).getInfo().equals(title)) return true;
+        if (catalog.get(index).getInfo().equalsIgnoreCase(title)) return true;
         return searchRecursive(title, index + 1);
     }
 
